@@ -97,9 +97,6 @@ class ElasticAPM(object):
         if not self.client:
             return
 
-        if self.app.debug and not self.client.config.debug:
-            return
-
         self.client.capture_exception(
             exc_info=kwargs.get("exc_info"),
             context={"request": get_data_from_request(request, self.client.config, constants.ERROR)},
@@ -174,7 +171,7 @@ class ElasticAPM(object):
             return {}
 
     def request_started(self, app):
-        if (not self.app.debug or self.client.config.debug) and not self.client.should_ignore_url(request.path):
+        if not self.client.should_ignore_url(request.path):
             trace_parent = TraceParent.from_headers(request.headers)
             self.client.begin_transaction("request", trace_parent=trace_parent)
             elasticapm.set_context(
@@ -185,18 +182,17 @@ class ElasticAPM(object):
             elasticapm.set_transaction_name(rule, override=False)
 
     def request_finished(self, app, response):
-        if not self.app.debug or self.client.config.debug:
-            elasticapm.set_context(
-                lambda: get_data_from_response(response, self.client.config, constants.TRANSACTION), "response"
-            )
-            if response.status_code:
-                result = "HTTP {}xx".format(response.status_code // 100)
-                elasticapm.set_transaction_outcome(http_status_code=response.status_code, override=False)
-            else:
-                result = response.status
-                elasticapm.set_transaction_outcome(http_status_code=response.status, override=False)
-            elasticapm.set_transaction_result(result, override=False)
-            self.client.end_transaction()
+        elasticapm.set_context(
+            lambda: get_data_from_response(response, self.client.config, constants.TRANSACTION), "response"
+        )
+        if response.status_code:
+            result = "HTTP {}xx".format(response.status_code // 100)
+            elasticapm.set_transaction_outcome(http_status_code=response.status_code, override=False)
+        else:
+            result = response.status
+            elasticapm.set_transaction_outcome(http_status_code=response.status, override=False)
+        elasticapm.set_transaction_result(result, override=False)
+        self.client.end_transaction()
 
     def capture_exception(self, *args, **kwargs):
         assert self.client, "capture_exception called before application configured"
