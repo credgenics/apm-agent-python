@@ -59,7 +59,6 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 
 import pkg_resources
 from setuptools import Extension, setup
-from setuptools.command.test import test as TestCommand
 
 pkg_resources.require("setuptools>=39.2")
 
@@ -87,26 +86,6 @@ class optional_build_ext(build_ext):
             raise BuildExtFailed()
 
 
-class PyTest(TestCommand):
-    user_options = [("pytest-args=", "a", "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = []
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
-
-
 def get_version():
     """
     Get version without importing from elasticapm. This avoids any side effects
@@ -127,7 +106,7 @@ def get_version():
     return "unknown"
 
 
-setup_kwargs = dict(cmdclass={"test": PyTest}, version=get_version())
+setup_kwargs = dict(cmdclass={}, version=get_version())
 
 
 def run_setup(with_extensions):
