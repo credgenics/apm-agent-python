@@ -60,7 +60,7 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 import pkg_resources
 from setuptools import Extension, setup
 
-pkg_resources.require("setuptools>=39.2")
+pkg_resources.require("setuptools==69.5.1")
 
 if sys.platform == "win32":
     build_ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError, IOError)
